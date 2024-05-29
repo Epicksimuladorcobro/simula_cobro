@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Cobro Semanal</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 50%;
+            margin: 20px auto;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+        h1, p {
+            text-align: center;
+        }
+        select, button {
+            width: 100%;
+        }
+        .rating {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .rating img {
+            cursor: pointer;
+            margin: 0 10px;
+            width: 50px;
+            height: 50px;
+        }
+        .container {
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div style="text-align: center;">
+        <img src="https://i.imgur.com/sto7EI0.png" alt="E-PICK Logo">
+    </div>
+    <h1>Simulador de Cobro Semanal</h1>
+    <table>
+        <tr>
+            <th>Simulador de cobro semanal</th>
+            <th>Lunes</th>
+            <th>Martes</th>
+            <th>Miércoles</th>
+            <th>Jueves</th>
+            <th>Viernes</th>
+        </tr>
+        <tr>
+            <td>INICIO</td>
+            <td><select id="inicio_lunes"></select></td>
+            <td><select id="inicio_martes"></select></td>
+            <td><select id="inicio_miercoles"></select></td>
+            <td><select id="inicio_jueves"></select></td>
+            <td><select id="inicio_viernes"></select></td>
+        </tr>
+        <tr>
+            <td>FIN</td>
+            <td><select id="fin_lunes"></select></td>
+            <td><select id="fin_martes"></select></td>
+            <td><select id="fin_miercoles"></select></td>
+            <td><select id="fin_jueves"></select></td>
+            <td><select id="fin_viernes"></select></td>
+        </tr>
+    </table>
+    <div style="text-align: center;">
+        <button onclick="calcularCobro()">Calcular Cobro</button>
+        <button onclick="refrescarConsulta()">Refrescar Consulta</button>
+        <p id="resultado"></p>
+        <p id="mensaje"></p>
+    </div>
+    <div style="text-align: center; margin-top: 30px;">
+        <p>¿Sentiste satisfactoria nuestra respuesta?</p>
+        <div class="rating">
+            <img src="https://i.imgur.com/NJUX8F8.png" alt="Muy insatisfecho" onclick="mostrarAgradecimiento()">
+            <img src="https://i.imgur.com/MEZTBDR.png" alt="Insatisfecho" onclick="mostrarAgradecimiento()">
+            <img src="https://i.imgur.com/CDrKWQb.png" alt="Neutral" onclick="mostrarAgradecimiento()">
+            <img src="https://i.imgur.com/8FqWbEq.png" alt="Satisfecho" onclick="mostrarAgradecimiento()">
+            <img src="https://i.imgur.com/YtBTO1s.png" alt="Muy satisfecho" onclick="mostrarAgradecimiento()">
+        </div>
+        <p id="agradecimiento"></p>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const horarios = [];
+            for (let h = 8; h < 19; h++) {
+                horarios.push(`${h}:00`);
+                horarios.push(`${h}:30`);
+            }
+
+            const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+            dias.forEach(dia => {
+                const selectInicio = document.getElementById(`inicio_${dia}`);
+                const selectFin = document.getElementById(`fin_${dia}`);
+                horarios.forEach(horario => {
+                    const optionInicio = document.createElement('option');
+                    optionInicio.value = horario;
+                    optionInicio.textContent = horario;
+                    selectInicio.appendChild(optionInicio);
+
+                    const optionFin = document.createElement('option');
+                    optionFin.value = horario;
+                    optionFin.textContent = horario;
+                    selectFin.appendChild(optionFin);
+                });
+            });
+        });
+
+        function calcularCobro() {
+            let horasTrabajadas = 0;
+            const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+            dias.forEach(dia => {
+                const inicio = document.getElementById(`inicio_${dia}`).value;
+                const fin = document.getElementById(`fin_${dia}`).value;
+                if (inicio && fin) {
+                    const [inicioHoras, inicioMinutos] = inicio.split(':').map(Number);
+                    const [finHoras, finMinutos] = fin.split(':').map(Number);
+                    let horas = (finHoras + finMinutos / 60) - (inicioHoras + inicioMinutos / 60);
+                    if (horas < 0) horas = 0;
+                    horasTrabajadas += horas;
+                }
+            });
+
+            let tarifa;
+            let tarifaDescripcion;
+            let mensaje = '';
+            if (horasTrabajadas <= 29) {
+                tarifa = 2601;
+                tarifaDescripcion = 'correspondiente a tarifa Base';
+                mensaje = `Te faltan ${(30 - horasTrabajadas).toFixed(2)} horas para cobrar la tarifa Plus 1.`;
+            } else if (horasTrabajadas <= 39) {
+                tarifa = 3044;
+                tarifaDescripcion = 'correspondiente a tarifa Plus 1';
+                mensaje = `Te faltan ${(40 - horasTrabajadas).toFixed(2)} horas para cobrar la tarifa Plus Full.`;
+            } else {
+                tarifa = 4184;
+                tarifaDescripcion = 'correspondiente a tarifa Plus Full';
+            }
+
+            const cobroTotal = horasTrabajadas * tarifa;
+            document.getElementById('resultado').textContent = `Total de horas trabajadas: ${horasTrabajadas.toFixed(2)}, Valor por hora: $${tarifa} (${tarifaDescripcion}), Total a cobrar: $${cobroTotal.toFixed(2)}`;
+            document.getElementById('mensaje').textContent = mensaje;
+        }
+
+        function refrescarConsulta() {
+            const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+            dias.forEach(dia => {
+                document.getElementById(`inicio_${dia}`).value = "";
+                document.getElementById(`fin_${dia}`).value = "";
+            });
+            document.getElementById('resultado').textContent = "";
+            document.getElementById('mensaje').textContent = "";
+        }
+
+        function mostrarAgradecimiento() {
+            document.getElementById('agradecimiento').textContent = 'Muchas gracias por tu valoración';
+        }
+    </script>
+</body>
+</html>
